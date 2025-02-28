@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>br.dev.ag.http.nio.rest</groupId>
-    <artifactId>NioRestClient</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <groupId>com.github.rrs671</groupId>
+    <artifactId>nio-rest-client</artifactId>
+    <version>0.0.2-SNAPSHOT</version>
 
     <name>NioRestClient</name>
     <description>Non-Blocking Async HTTP Client based on RestClient</description>
@@ -26,20 +26,11 @@
         </license>
     </licenses>
 
-    <scm>
-        <url>https://github.com/rrs671/NioRestClient</url>
-        <connection>scm:git:git://github.com/rrs671/NioRestClient.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/rrs671/NioRestClient.git</developerConnection>
-    </scm>
-
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>github</id>
+            <name>GitHub OWNER Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/rrs671/NioRestClient</url>
         </repository>
     </distributionManagement>
 
@@ -77,6 +68,7 @@
                 <version>3.1.1</version>
             </plugin>
 
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -91,6 +83,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -135,7 +128,7 @@
             -->
         </plugins>
     </build>
-
+<!--
     <profiles>
         <profile>
             <id>release</id>
@@ -156,4 +149,5 @@
             </build>
         </profile>
     </profiles>
+    -->
 </project>
