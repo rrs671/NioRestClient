@@ -1,11 +1,12 @@
-package br.dev.ag.http.nio.rest.client.request;
+package com.github.rrs671.http.nio.rest.client.request;
 
-import br.dev.ag.http.nio.rest.client.factory.RestClientFactory;
-import br.dev.ag.http.nio.rest.utils.RequestParams;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClient;
+import com.github.rrs671.http.nio.rest.client.factory.RestClientFactory;
+import com.github.rrs671.http.nio.rest.exceptions.CommunicateException;
+import com.github.rrs671.http.nio.rest.exceptions.HttpException;
+import com.github.rrs671.http.nio.rest.exceptions.ProcessException;
+import com.github.rrs671.http.nio.rest.utils.HttpTimeoutParams;
+import com.github.rrs671.http.nio.rest.utils.RequestParams;
+import org.springframework.web.client.*;
 
 import java.io.Closeable;
 import java.net.URLEncoder;
@@ -22,17 +23,23 @@ public class RestRequest implements Closeable {
     private final ExecutorService limitedThreadsExecutor;
     private final RestClient restClient;
 
-    public RestRequest(int timeoutInSeconds) {
-        this.restClient = RestClientFactory.create(timeoutInSeconds);
+    public RestRequest(HttpTimeoutParams httpTimeoutParams) {
+        this.restClient = RestClientFactory.create(httpTimeoutParams.getConnTimeout(), httpTimeoutParams.getReadTimeout());
         limitedThreadsExecutor = null;
     }
 
-    public RestRequest(int timeoutInSeconds, int currentRequests) {
-        this.restClient = RestClientFactory.create(timeoutInSeconds);
+
+    public RestRequest(HttpTimeoutParams httpTimeoutParams, int currentRequests) {
+        this.restClient = RestClientFactory.create(httpTimeoutParams.getConnTimeout(), httpTimeoutParams.getReadTimeout());
         limitedThreadsExecutor = new ThreadPoolExecutor(
                 currentRequests, currentRequests, 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>(), Thread.ofVirtual().factory()
         );
+    }
+
+    public RestRequest(HttpTimeoutParams httpTimeoutParams, int currentRequests, int delayRequestsInSeconds) {
+        this.restClient = RestClientFactory.create(httpTimeoutParams.getConnTimeout(), httpTimeoutParams.getReadTimeout());
+        this.limitedThreadsExecutor = Executors.newScheduledThreadPool(currentRequests);
     }
 
     public <T> CompletableFuture<T> get(RequestParams params, Class<T> clazz) {
@@ -47,7 +54,7 @@ public class RestRequest implements Closeable {
                 }
 
                 return spec.retrieve().body(clazz);
-            }, url
+            }
         ), executor);
     }
 
@@ -64,7 +71,7 @@ public class RestRequest implements Closeable {
                 }
 
                 return spec.body(body).retrieve().body(clazz);
-            }, url
+            }
         ), executor);
     }
 
@@ -81,7 +88,7 @@ public class RestRequest implements Closeable {
                 }
 
                 return spec.body(body).retrieve().body(clazz);
-            }, url
+            }
         ), executor);
     }
 
@@ -98,7 +105,7 @@ public class RestRequest implements Closeable {
                 }
 
                 return spec.body(body).retrieve().body(clazz);
-            }, url
+            }
         ), executor);
     }
 
@@ -117,7 +124,7 @@ public class RestRequest implements Closeable {
 
             spec.retrieve();
             return null;
-        }, url), executor);
+        }), executor);
     }
 
     private String buildUrl(String baseUrl, List<String> paths, Map<String, String> queryParams) {
@@ -137,16 +144,15 @@ public class RestRequest implements Closeable {
         return url.toString();
     }
 
-    private <T> T executeRequest(RequestExecutor<T> executor, String url) {
+    private <T> T executeRequest(RequestExecutor<T> executor) {
         try {
             return executor.execute();
-        } catch (HttpClientErrorException e) {
-            HttpStatusCode statusCode = e.getStatusCode();
-            throw e;
+        } catch (HttpStatusCodeException e) {
+            throw new HttpException(e);
         } catch (ResourceAccessException e) {
-            throw e;
+            throw new CommunicateException(e.getMessage()) ;
         } catch (Exception e) {
-            throw e;
+            throw new ProcessException(e.getMessage());
         }
     }
 

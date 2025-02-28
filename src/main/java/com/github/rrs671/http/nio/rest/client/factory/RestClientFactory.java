@@ -1,4 +1,4 @@
-package br.dev.ag.http.nio.rest.client.factory;
+package com.github.rrs671.http.nio.rest.client.factory;
 
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -11,14 +11,15 @@ public abstract class RestClientFactory {
     /**
      * Returns a RestClient instance
      *
-     * @param timeoutInSeconds timeout in seconds for connection and read
+     * @param connectionTimeOutInSeconds connection timeout in seconds
+     * @param readTimeOutInSeconds read timeout in seconds
      * @return a RestClient instance
      */
-    public static RestClient create(int timeoutInSeconds) {
+    public static RestClient create(int connectionTimeOutInSeconds, int readTimeOutInSeconds) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
 
-        requestFactory.setConnectTimeout((int) Duration.ofSeconds(timeoutInSeconds).toMillis());
-        requestFactory.setReadTimeout((int) Duration.ofSeconds(timeoutInSeconds).toMillis());
+        requestFactory.setConnectTimeout((int) Duration.ofSeconds(connectionTimeOutInSeconds).toMillis());
+        requestFactory.setReadTimeout((int) Duration.ofSeconds(readTimeOutInSeconds).toMillis());
 
         return RestClient.builder()
                 .requestFactory(requestFactory)

@@ -1,4 +1,4 @@
-package br.dev.ag.http.nio.rest.utils;
+package com.github.rrs671.http.nio.rest.utils;
 import java.util.*;
 import java.util.stream.IntStream;
 
