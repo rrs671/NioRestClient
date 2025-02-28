@@ -1,4 +1,4 @@
-package br.dev.ag.http.nio.rest.client.request;
+package com.github.rrs671.http.nio.rest.client.request;
 
 @FunctionalInterface
 public interface RequestExecutor<T> {
