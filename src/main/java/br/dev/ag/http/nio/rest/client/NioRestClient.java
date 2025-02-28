@@ -2,8 +2,6 @@ package br.dev.ag.http.nio.rest.client;
 
 import br.dev.ag.http.nio.rest.client.request.RestRequest;
 
-import java.util.Collection;
-
 /**
  * NioRestClient class, used to build RestRequests.
  *

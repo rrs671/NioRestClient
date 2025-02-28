@@ -1,7 +1,7 @@
 package br.dev.ag.http.nio.rest.client.request;
 
-import br.dev.ag.http.nio.rest.utils.RequestParams;
 import br.dev.ag.http.nio.rest.client.factory.RestClientFactory;
+import br.dev.ag.http.nio.rest.utils.RequestParams;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
