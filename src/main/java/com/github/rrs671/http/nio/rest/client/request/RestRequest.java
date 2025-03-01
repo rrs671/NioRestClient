@@ -1,10 +1,14 @@
 package com.github.rrs671.http.nio.rest.client.request;
 
+import com.github.rrs671.http.nio.rest.client.enums.VerbsEnum;
 import com.github.rrs671.http.nio.rest.client.factory.RestClientFactory;
+import com.github.rrs671.http.nio.rest.client.request.strategy.scheduled_request.ScheduledRequest;
+import com.github.rrs671.http.nio.rest.client.request.strategy.scheduled_request.strategies.*;
 import com.github.rrs671.http.nio.rest.exceptions.CommunicateException;
 import com.github.rrs671.http.nio.rest.exceptions.HttpException;
 import com.github.rrs671.http.nio.rest.exceptions.ProcessException;
-import com.github.rrs671.http.nio.rest.utils.HttpTimeoutParams;
+import com.github.rrs671.http.nio.rest.utils.AsyncExecutorUtils;
+import com.github.rrs671.http.nio.rest.utils.NioRestClientParams;
 import com.github.rrs671.http.nio.rest.utils.RequestParams;
 import org.springframework.web.client.*;
 
@@ -20,102 +24,137 @@ import java.util.stream.Collectors;
 public class RestRequest implements Closeable {
 
     private static final ExecutorService globalExecutor = Executors.newVirtualThreadPerTaskExecutor();
-    private final ExecutorService limitedThreadsExecutor;
+    private ExecutorService limitedThreadsExecutor;
+    private final ExecutorService defaultExecutor;
+
     private final RestClient restClient;
+    private final NioRestClientParams nioRestClientParams;
+    private Semaphore semaphore;
 
-    public RestRequest(HttpTimeoutParams httpTimeoutParams) {
-        this.restClient = RestClientFactory.create(httpTimeoutParams.getConnTimeout(), httpTimeoutParams.getReadTimeout());
-        limitedThreadsExecutor = null;
-    }
+    public RestRequest(NioRestClientParams nioRestClientParams) {
+        this.restClient = RestClientFactory.create(nioRestClientParams.getConnTimeout(), nioRestClientParams.getReadTimeout());
+        this.nioRestClientParams = nioRestClientParams;
 
 
-    public RestRequest(HttpTimeoutParams httpTimeoutParams, int currentRequests) {
-        this.restClient = RestClientFactory.create(httpTimeoutParams.getConnTimeout(), httpTimeoutParams.getReadTimeout());
-        limitedThreadsExecutor = new ThreadPoolExecutor(
-                currentRequests, currentRequests, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(), Thread.ofVirtual().factory()
-        );
-    }
+        if (nioRestClientParams.getMaxConcurrentRequests() > 0) {
+            limitedThreadsExecutor = new ThreadPoolExecutor(
+                    nioRestClientParams.getMaxConcurrentRequests(), nioRestClientParams.getMaxConcurrentRequests(), 0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>(), Thread.ofVirtual().factory()
+            );
+        }
 
-    public RestRequest(HttpTimeoutParams httpTimeoutParams, int currentRequests, int delayRequestsInSeconds) {
-        this.restClient = RestClientFactory.create(httpTimeoutParams.getConnTimeout(), httpTimeoutParams.getReadTimeout());
-        this.limitedThreadsExecutor = Executors.newScheduledThreadPool(currentRequests);
+        if (isScheduled()) {
+            this.semaphore = new Semaphore(nioRestClientParams.getMaxConcurrentRequests());
+        }
+
+        this.defaultExecutor = AsyncExecutorUtils.getExecutorService(limitedThreadsExecutor, globalExecutor);
     }
 
     public <T> CompletableFuture<T> get(RequestParams params, Class<T> clazz) {
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
 
-        ExecutorService executor = getExecutorService();
-        return CompletableFuture.supplyAsync(() -> executeRequest(() -> {
-                RestClient.RequestHeadersSpec<?> spec = restClient.get().uri(url);
+        if (isScheduled()) {
+            return scheduledGet(params, clazz, url);
+        }
 
-                if (Objects.nonNull(params.getHeaders())) {
-                    params.getHeaders().forEach(spec::header);
-                }
+        return AsyncExecutorUtils.asyncRequest(defaultExecutor, () -> {
+            RestClient.RequestHeadersSpec<?> spec = restClient.get().uri(url);
 
-                return spec.retrieve().body(clazz);
+            if (Objects.nonNull(params.getHeaders())) {
+                params.getHeaders().forEach(spec::header);
             }
-        ), executor);
+
+            return spec.retrieve().body(clazz);
+        });
+    }
+
+    private <T> CompletableFuture<T> scheduledGet(RequestParams params, Class<T> clazz, String url) {
+        GetScheduledRequestStrategy get = (GetScheduledRequestStrategy) ScheduledRequest.getVerbExecutor(VerbsEnum.GET);
+        Future<T> future = get.getScheduled(limitedThreadsExecutor, semaphore, restClient, params, clazz, url);
+        return AsyncExecutorUtils.returnAsyncScheduledResponse(future, globalExecutor, semaphore, nioRestClientParams);
     }
 
     public <T, R> CompletableFuture<T> post(RequestParams params, R body, Class<T> clazz) {
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
 
-        ExecutorService executor = getExecutorService();
+        if (isScheduled()) {
+            return scheduledPost(params, body, clazz, url);
+        }
 
-        return CompletableFuture.supplyAsync(() -> executeRequest(() -> {
-                RestClient.RequestBodySpec spec = restClient.post().uri(url);
+        return AsyncExecutorUtils.asyncRequest(defaultExecutor, () -> {
+            RestClient.RequestBodySpec spec = restClient.post().uri(url);
 
-                if (Objects.nonNull(params.getHeaders())) {
-                    params.getHeaders().forEach(spec::header);
-                }
-
-                return spec.body(body).retrieve().body(clazz);
+            if (Objects.nonNull(params.getHeaders())) {
+                params.getHeaders().forEach(spec::header);
             }
-        ), executor);
+
+            return spec.body(body).retrieve().body(clazz);
+        });
+    }
+
+    private <T, R> CompletableFuture<T> scheduledPost(RequestParams params, R body, Class<T> clazz, String url) {
+        PostScheduledRequestStrategy post = (PostScheduledRequestStrategy) ScheduledRequest.getVerbExecutor(VerbsEnum.POST);
+        Future<T> future = post.postScheduled(limitedThreadsExecutor, semaphore, restClient, params, body, clazz, url);
+        return AsyncExecutorUtils.returnAsyncScheduledResponse(future, globalExecutor, semaphore, nioRestClientParams);
     }
 
     public <T, R> CompletableFuture<T> put(RequestParams params, R body, Class<T> clazz) {
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
 
-        ExecutorService executor = getExecutorService();
+        if (isScheduled()) {
+            return scheduledPut(params, body, clazz, url);
+        }
 
-        return CompletableFuture.supplyAsync(() -> executeRequest(() -> {
-                RestClient.RequestBodySpec spec = restClient.put().uri(url);
+        return AsyncExecutorUtils.asyncRequest(defaultExecutor, () -> {
+            RestClient.RequestBodySpec spec = restClient.put().uri(url);
 
-                if (Objects.nonNull(params.getHeaders())) {
-                    params.getHeaders().forEach(spec::header);
-                }
-
-                return spec.body(body).retrieve().body(clazz);
+            if (Objects.nonNull(params.getHeaders())) {
+                params.getHeaders().forEach(spec::header);
             }
-        ), executor);
+
+            return spec.body(body).retrieve().body(clazz);
+        });
+    }
+
+    private <T, R> CompletableFuture<T> scheduledPut(RequestParams params, R body, Class<T> clazz, String url) {
+        PutScheduledRequestStrategy put = (PutScheduledRequestStrategy) ScheduledRequest.getVerbExecutor(VerbsEnum.PUT);
+        Future<T> future = put.putScheduled(limitedThreadsExecutor, semaphore, restClient, params, body, clazz, url);
+        return AsyncExecutorUtils.returnAsyncScheduledResponse(future, globalExecutor, semaphore, nioRestClientParams);
     }
 
     public <T, R> CompletableFuture<T> patch(RequestParams params, R body, Class<T> clazz) {
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
 
-        ExecutorService executor = getExecutorService();
+        if (isScheduled()) {
+            return scheduledPatch(params, body, clazz, url);
+        }
 
-        return CompletableFuture.supplyAsync(() -> executeRequest(() -> {
-                RestClient.RequestBodySpec spec = restClient.patch().uri(url);
+        return AsyncExecutorUtils.asyncRequest(defaultExecutor, () -> {
+            RestClient.RequestBodySpec spec = restClient.patch().uri(url);
 
-                if (Objects.nonNull(params.getHeaders())) {
-                    params.getHeaders().forEach(spec::header);
-                }
-
-                return spec.body(body).retrieve().body(clazz);
+            if (Objects.nonNull(params.getHeaders())) {
+                params.getHeaders().forEach(spec::header);
             }
-        ), executor);
+
+            return spec.body(body).retrieve().body(clazz);
+        });
+    }
+
+    private <T, R> CompletableFuture<T> scheduledPatch(RequestParams params, R body, Class<T> clazz, String url) {
+        PatchScheduledRequestStrategy patch = (PatchScheduledRequestStrategy) ScheduledRequest.getVerbExecutor(VerbsEnum.PATCH);
+        Future<T> future = patch.patchScheduled(limitedThreadsExecutor, semaphore, restClient, params, body, clazz, url);
+        return AsyncExecutorUtils.returnAsyncScheduledResponse(future, globalExecutor, semaphore, nioRestClientParams);
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public CompletableFuture<Void> delete(RequestParams params) {
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
 
-        ExecutorService executor = getExecutorService();
+        if (isScheduled()) {
+            return scheduledDelete(params, url);
+        }
 
-        return CompletableFuture.supplyAsync(() -> executeRequest(() -> {
+        return AsyncExecutorUtils.asyncRequest(defaultExecutor, () -> {
             RestClient.RequestHeadersSpec<?> spec = restClient.delete().uri(url);
 
             if (Objects.nonNull(params.getHeaders())) {
@@ -124,7 +163,13 @@ public class RestRequest implements Closeable {
 
             spec.retrieve();
             return null;
-        }), executor);
+        });
+    }
+
+    private CompletableFuture<Void> scheduledDelete(RequestParams params, String url) {
+        DeleteScheduledRequestStrategy delete = (DeleteScheduledRequestStrategy) ScheduledRequest.getVerbExecutor(VerbsEnum.DELETE);
+        Future<Void> future = delete.deleteScheduled(limitedThreadsExecutor, semaphore, restClient, params, url);
+        return AsyncExecutorUtils.returnAsyncScheduledResponse(future, globalExecutor, semaphore, nioRestClientParams);
     }
 
     private String buildUrl(String baseUrl, List<String> paths, Map<String, String> queryParams) {
@@ -144,20 +189,8 @@ public class RestRequest implements Closeable {
         return url.toString();
     }
 
-    private <T> T executeRequest(RequestExecutor<T> executor) {
-        try {
-            return executor.execute();
-        } catch (HttpStatusCodeException e) {
-            throw new HttpException(e);
-        } catch (ResourceAccessException e) {
-            throw new CommunicateException(e.getMessage()) ;
-        } catch (Exception e) {
-            throw new ProcessException(e.getMessage());
-        }
-    }
-
-    private ExecutorService getExecutorService() {
-        return (Objects.isNull(limitedThreadsExecutor)) ? globalExecutor : limitedThreadsExecutor;
+    private boolean isScheduled() {
+        return this.nioRestClientParams.getDelay() > 0 && nioRestClientParams.getMaxConcurrentRequests() > 0;
     }
 
     @Override
