@@ -8,6 +8,8 @@ import java.time.Duration;
 
 public abstract class RestClientFactory {
 
+    private RestClientFactory() {}
+
     /**
      * Returns a RestClient instance
      *
