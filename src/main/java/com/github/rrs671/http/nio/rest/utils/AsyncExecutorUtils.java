@@ -68,4 +68,9 @@ public abstract class AsyncExecutorUtils {
         }
     }
 
+    public static boolean processOnParalell() {
+        int cores = Runtime.getRuntime().availableProcessors();
+        return cores > 1;
+    }
+
 }

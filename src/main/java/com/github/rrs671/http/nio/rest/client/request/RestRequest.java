@@ -58,6 +58,7 @@ public class RestRequest implements Closeable {
         }
 
         return AsyncExecutorUtils.asyncRequest(defaultExecutor, () -> {
+            System.out.println("Req...");
             RestClient.RequestHeadersSpec<?> spec = restClient.get().uri(url);
 
             if (Objects.nonNull(params.getHeaders())) {
