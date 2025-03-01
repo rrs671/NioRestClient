@@ -20,7 +20,7 @@ Add the dependency to your Maven project:
 <dependency>
     <groupId>com.github.rrs671</groupId>
     <artifactId>nio-rest-client</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
@@ -29,26 +29,33 @@ Example usage of the library to perform a GET request:
 
 ```java
 
-HttpTimeoutParams httpTimeoutParams = HttpTimeoutParams.builder()
+NioRestClientParams params = NioRestClientParams.builder()
         .addConnectionTimeout(3)
         .addReadTimeout(6)
         .build();
 
 NioRestClient nioRestClient = new NioRestClient();
 
-try(RestRequest rest = nioRestClient.rest(httpTimeoutParams)) {
+try (RestRequest rest = nioRestClient.rest(params)) {
     RequestParams requestParams = RequestParams.builder()
-        .addUrl("https://api.example.com/data")
-        .addHeaders("Content-Type", "application/json")
-        .build();
+            .addUrl("https://api.example.com/data")
+            .addHeaders("Content-Type", "application/json")
+            .build();
     
-    rest.get(requestParams, String.class)
-        .thenAccept(response -> System.out.println("Response: " + response))
-        .exceptionally(error -> {
-            System.err.println("Request error: " + error.getMessage());
-            return null;
-        });
+    CompletableFuture<String> future = rest.get(requestParams, String.class);
+    Response<String> response = ResponseUtils.getResult(future);
+    
+    if (response.isSuccess()) {
+        System.out.println(response.getSucessResult());
+    } else {
+        System.out.println(response.getErrorMessage());
+        
+        if (response.isHttpResponseError()) {
+            System.out.println(response.getErrorStatusCode());
+        }
+    }
 }
+
 ```
 
 ## License
