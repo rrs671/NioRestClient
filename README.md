@@ -20,7 +20,7 @@ Add the dependency to your Maven project:
 <dependency>
     <groupId>com.github.rrs671</groupId>
     <artifactId>nio-rest-client</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
 </dependency>
 ```
 
