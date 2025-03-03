@@ -36,23 +36,24 @@ NioRestClientParams params = NioRestClientParams.builder()
 
 NioRestClient nioRestClient = new NioRestClient();
 
-try (RestRequest rest = nioRestClient.rest(params)) {
-    RequestParams requestParams = RequestParams.builder()
-            .addUrl("https://api.example.com/data")
-            .addHeaders("Content-Type", "application/json")
-            .build();
+RestRequest rest = nioRestClient.rest(params);
+
+RequestParams requestParams = RequestParams.builder()
+        .addUrl("https://api.example.com/data")
+        .addHeaders("Content-Type", "application/json")
+        .build();
+
+CompletableFuture<String> future = rest.get(requestParams, String.class);
+
+Response<String> response = ResponseUtils.getResult(future);
+
+if (response.isSuccess()) {
+    System.out.println(response.getSucessResult());
+} else {
+    System.out.println(response.getErrorMessage());
     
-    CompletableFuture<String> future = rest.get(requestParams, String.class);
-    Response<String> response = ResponseUtils.getResult(future);
-    
-    if (response.isSuccess()) {
-        System.out.println(response.getSucessResult());
-    } else {
-        System.out.println(response.getErrorMessage());
-        
-        if (response.isHttpResponseError()) {
-            System.out.println(response.getErrorStatusCode());
-        }
+    if (response.isHttpResponseError()) {
+        System.out.println(response.getErrorStatusCode());
     }
 }
 

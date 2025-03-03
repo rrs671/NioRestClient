@@ -1,19 +1,19 @@
-package com.github.rrs671.http.nio.rest.client.request.strategy.scheduled_request.strategies;
+package com.github.rrs671.http.nio.rest.client.request.strategy.request.strategies;
 
-import com.github.rrs671.http.nio.rest.client.request.strategy.scheduled_request.ScheduledRequestStrategy;
+import com.github.rrs671.http.nio.rest.client.request.strategy.request.RequestStrategy;
 import com.github.rrs671.http.nio.rest.utils.AsyncExecutorUtils;
 import com.github.rrs671.http.nio.rest.utils.RequestParams;
 import org.springframework.web.client.RestClient;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
-public class DeleteScheduledRequestStrategy implements ScheduledRequestStrategy {
+public class DeleteRequestStrategy implements RequestStrategy {
 
-    public Future<Void> deleteScheduled(ExecutorService executor, Semaphore semaphore, RestClient restClient, RequestParams params, String url) {
-        return AsyncExecutorUtils.asyncScheduledRequest(() -> {
+    public CompletableFuture<Void> deleteRequest(ExecutorService executor, Semaphore semaphore, RestClient restClient, RequestParams params, String url) {
+        return AsyncExecutorUtils.asyncRequest(executor, semaphore, () -> {
             RestClient.RequestHeadersSpec<?> spec = restClient.delete().uri(url);
 
             if (Objects.nonNull(params.getHeaders())) {
@@ -22,7 +22,7 @@ public class DeleteScheduledRequestStrategy implements ScheduledRequestStrategy 
 
             spec.retrieve();
             return null;
-        }, executor, semaphore);
+        });
     }
 
 }
