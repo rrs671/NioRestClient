@@ -7,14 +7,14 @@ package com.github.rrs671.http.nio.rest.utils;
  *
  * @since 1.0.0
  */
-public class NioRestClientParams {
+public class ClientParams {
 
     private int connTimeout;
     private int readTimeout;
     private int maxConcurrentRequests;
     private int delay;
 
-    private NioRestClientParams() {}
+    private ClientParams() {}
 
     public int getConnTimeout() {
         return connTimeout;
@@ -64,8 +64,8 @@ public class NioRestClientParams {
             return this;
         }
 
-        public NioRestClientParams build() {
-            NioRestClientParams clientParams = new NioRestClientParams();
+        public ClientParams build() {
+            ClientParams clientParams = new ClientParams();
 
             clientParams.connTimeout = this.connTimeout;
             clientParams.readTimeout = this.readTimeout;

@@ -2,6 +2,7 @@ package com.github.rrs671.http.nio.rest.client.request.strategy.request.strategi
 
 import com.github.rrs671.http.nio.rest.client.request.strategy.request.RequestStrategy;
 import com.github.rrs671.http.nio.rest.utils.AsyncExecutorUtils;
+import com.github.rrs671.http.nio.rest.utils.ClientParams;
 import com.github.rrs671.http.nio.rest.utils.RequestParams;
 import org.springframework.web.client.RestClient;
 
@@ -12,8 +13,9 @@ import java.util.concurrent.Semaphore;
 
 public class DeleteRequestStrategy implements RequestStrategy {
 
-    public CompletableFuture<Void> deleteRequest(ExecutorService executor, Semaphore semaphore, RestClient restClient, RequestParams params, String url) {
-        return AsyncExecutorUtils.asyncRequest(executor, semaphore, () -> {
+    public CompletableFuture<Void> deleteRequest(ExecutorService executor, Semaphore semaphore,
+                                                 RestClient restClient, RequestParams params, String url, ClientParams clientParams, boolean isScheduled) {
+        return AsyncExecutorUtils.asyncRequest(executor, semaphore, clientParams, isScheduled, () -> {
             RestClient.RequestHeadersSpec<?> spec = restClient.delete().uri(url);
 
             if (Objects.nonNull(params.getHeaders())) {

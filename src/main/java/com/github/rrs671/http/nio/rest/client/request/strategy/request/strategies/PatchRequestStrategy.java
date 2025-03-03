@@ -2,6 +2,7 @@ package com.github.rrs671.http.nio.rest.client.request.strategy.request.strategi
 
 import com.github.rrs671.http.nio.rest.client.request.strategy.request.RequestStrategy;
 import com.github.rrs671.http.nio.rest.utils.AsyncExecutorUtils;
+import com.github.rrs671.http.nio.rest.utils.ClientParams;
 import com.github.rrs671.http.nio.rest.utils.RequestParams;
 import org.springframework.web.client.RestClient;
 
@@ -12,8 +13,9 @@ import java.util.concurrent.Semaphore;
 
 public class PatchRequestStrategy implements RequestStrategy {
 
-    public <T, R> CompletableFuture<T> patchRequest(ExecutorService executor, Semaphore semaphore, RestClient restClient, RequestParams params, R body, Class<T> clazz, String url) {
-        return AsyncExecutorUtils.asyncRequest(executor, semaphore, () -> {
+    public <T, R> CompletableFuture<T> patchRequest(ExecutorService executor, Semaphore semaphore, RestClient restClient,
+                                                    RequestParams params, R body, Class<T> clazz, String url, ClientParams clientParams, boolean isScheduled) {
+        return AsyncExecutorUtils.asyncRequest(executor, semaphore, clientParams, isScheduled, () -> {
             RestClient.RequestBodySpec spec = restClient.patch().uri(url);
 
             if (Objects.nonNull(params.getHeaders())) {
