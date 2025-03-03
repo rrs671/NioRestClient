@@ -20,7 +20,7 @@ Add the dependency to your Maven project:
 <dependency>
     <groupId>com.github.rrs671</groupId>
     <artifactId>nio-rest-client</artifactId>
-    <version>2.1.1</version>
+    <version>2.3.0</version>
 </dependency>
 ```
 
@@ -29,29 +29,28 @@ Example usage of the library to perform a GET request:
 
 ```java
 
-NioRestClientParams params = NioRestClientParams.builder()
+ClientParams clientParams = ClientParams.builder()
         .addConnectionTimeout(3)
         .addReadTimeout(6)
         .build();
 
 NioRestClient nioRestClient = new NioRestClient();
 
-RestRequest rest = nioRestClient.rest(params);
+RestRequest restRequest = nioRestClient.rest(clientParams);
 
-RequestParams requestParams = RequestParams.builder()
+RequestParams params = RequestParams.builder()
         .addUrl("https://api.example.com/data")
         .addHeaders("Content-Type", "application/json")
         .build();
 
-CompletableFuture<String> future = rest.get(requestParams, String.class);
-
-Response<String> response = ResponseUtils.getResult(future);
+Request<String> request = restRequest.get(params, String.class);
+Response<String> response = request.getResponse();
 
 if (response.isSuccess()) {
     System.out.println(response.getSucessResult());
 } else {
     System.out.println(response.getErrorMessage());
-    
+
     if (response.isHttpResponseError()) {
         System.out.println(response.getErrorStatusCode());
     }
