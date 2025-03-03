@@ -34,7 +34,7 @@ public abstract class ResponseUtils {
      * @return a List of Response instance
      */
     public static <T> List<Response<T>> getMultiResult(List<CompletableFuture<T>> requests) {
-        return (AsyncExecutorUtils.processOnParalell() ? requests.parallelStream() : requests.stream())
+        return (AsyncExecutorUtils.isParalell() ? requests.parallelStream() : requests.stream())
                 .map(ResponseUtils::getResult)
                 .toList();
     }
@@ -45,12 +45,10 @@ public abstract class ResponseUtils {
      * @param requests futures to be processed and get the requests responses
      * @return a Map with the response Key and Response instance
      */
-    public static <T, K> Map<K, Response<T>> getMultiResultToMap(Map<K, CompletableFuture<T>> requests) {
-        return (AsyncExecutorUtils.processOnParalell() ? requests.entrySet().parallelStream() : requests.entrySet().stream())
-                .map(entry -> {
-                            return new AbstractMap.SimpleEntry(entry.getKey(), ResponseUtils.getResult(entry.getValue()));
-                        }
-                ).collect(Collectors.toMap(k -> (K) k.getKey(), v -> (Response<T>) v.getValue()));
+    public static <T, K> Map<K, Response<T>> getMultiResult(Map<K, CompletableFuture<T>> requests) {
+        return (AsyncExecutorUtils.isParalell() ? requests.entrySet().parallelStream() : requests.entrySet().stream())
+                .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), ResponseUtils.getResult(entry.getValue())))
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
     }
 
 }

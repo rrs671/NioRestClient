@@ -27,12 +27,20 @@ public class Response<T> {
     }
 
     public Response(Throwable throwable) {
-        message = throwable.getMessage();
+        if (throwable.getCause() != null && throwable.getCause().getCause() != null) {
+            message = throwable.getCause().getCause().getMessage();
+        } else if (throwable.getCause() != null) {
+            message = throwable.getCause().getMessage();
+        } else {
+            message = throwable.getMessage();
+        }
 
         if (throwable instanceof HttpException) {
             statusCode = extractStatusCode(throwable);
-        } else if (throwable.getCause() != null && throwable.getCause() instanceof HttpException) {
+        } else if (throwable.getCause() instanceof HttpException) {
             statusCode = extractStatusCode(throwable);
+        } else if (throwable.getCause().getCause() instanceof HttpException) {
+            statusCode = extractStatusCode(throwable.getCause());
         }
 
         result = null;
