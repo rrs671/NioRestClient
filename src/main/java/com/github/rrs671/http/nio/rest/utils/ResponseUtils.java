@@ -1,5 +1,6 @@
 package com.github.rrs671.http.nio.rest.utils;
 
+import com.github.rrs671.http.nio.rest.http.Request;
 import com.github.rrs671.http.nio.rest.http.Response;
 
 import java.util.AbstractMap;
@@ -33,9 +34,9 @@ public abstract class ResponseUtils {
      * @param requests futures to be processed and get the requests responses
      * @return a List of Response instance
      */
-    public static <T> List<Response<T>> getMultiResult(List<CompletableFuture<T>> requests) {
+    public static <T> List<Response<T>> getMultiResult(List<Request<T>> requests) {
         return (AsyncExecutorUtils.isParalell() ? requests.parallelStream() : requests.stream())
-                .map(ResponseUtils::getResult)
+                .map(Request::getResponse)
                 .toList();
     }
 
@@ -45,9 +46,9 @@ public abstract class ResponseUtils {
      * @param requests futures to be processed and get the requests responses
      * @return a Map with the response Key and Response instance
      */
-    public static <T, K> Map<K, Response<T>> getMultiResult(Map<K, CompletableFuture<T>> requests) {
+    public static <T, K> Map<K, Response<T>> getMultiResult(Map<K, Request<T>> requests) {
         return (AsyncExecutorUtils.isParalell() ? requests.entrySet().parallelStream() : requests.entrySet().stream())
-                .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), ResponseUtils.getResult(entry.getValue())))
+                .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue().getResponse()))
                 .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
     }
 
