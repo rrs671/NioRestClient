@@ -1,7 +1,10 @@
 package com.github.rrs671.http.nio.rest.client;
 
 import com.github.rrs671.http.nio.rest.client.request.RestRequest;
-import com.github.rrs671.http.nio.rest.utils.NioRestClientParams;
+import com.github.rrs671.http.nio.rest.utils.ClientParams;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * NioRestClient class, used to build RestRequests.
@@ -16,13 +19,13 @@ public class NioRestClient {
      * @return a RestRequest instance
      */
     public RestRequest rest() {
-        NioRestClientParams nioRestClientParams = NioRestClientParams.builder()
+        ClientParams clientParams = ClientParams.builder()
                 .addReadTimeout(0)
                 .addConnectionTimeout(0)
                 .addMaxConcurrentRequest(0)
                 .build();
 
-        return new RestRequest(nioRestClientParams);
+        return new RestRequest(clientParams);
     }
 
     /**
@@ -32,13 +35,13 @@ public class NioRestClient {
      * @return a RestRequest instance
      */
     public RestRequest rest(int timeoutInSeconds) {
-        NioRestClientParams nioRestClientParams = NioRestClientParams.builder()
+        ClientParams clientParams = ClientParams.builder()
                 .addReadTimeout(timeoutInSeconds)
                 .addConnectionTimeout(timeoutInSeconds)
                 .addMaxConcurrentRequest(0)
                 .build();
 
-        return new RestRequest(nioRestClientParams);
+        return new RestRequest(clientParams);
     }
 
     /**
@@ -49,24 +52,24 @@ public class NioRestClient {
      * @return a RestRequest instance
      */
     public RestRequest rest(int timeoutInSeconds, int maxConcurrentRequests) {
-        NioRestClientParams nioRestClientParams = NioRestClientParams.builder()
+        ClientParams clientParams = ClientParams.builder()
                 .addReadTimeout(timeoutInSeconds)
                 .addConnectionTimeout(timeoutInSeconds)
                 .addMaxConcurrentRequest(maxConcurrentRequests)
                 .build();
 
-        return new RestRequest(nioRestClientParams);
+        return new RestRequest(clientParams);
     }
 
     /**
      * Returns a RestRequest instance
      *
-     * @param nioRestClientParams a object that contains NioRestClient parameters like connection and read timeout values in seconds
+     * @param clientParams a object that contains NioRestClient parameters like connection and read timeout values in seconds
      *                            and max concurrent requests
      * @return a RestRequest instance
      */
-    public RestRequest rest(NioRestClientParams nioRestClientParams) {
-        return new RestRequest(nioRestClientParams);
+    public RestRequest rest(ClientParams clientParams) {
+        return new RestRequest(clientParams);
     }
 
 }
