@@ -47,7 +47,7 @@ RequestParams params = RequestParams.builder()
 AsyncRequest<String> request = restRequest.get(params, String.class);
 Response<String> response = request.getResponse();
 
-if (response.isSuccess() && response.getSuccessResult().isPresent()) {
+if (response.isSuccess()) {
     System.out.println(response.getSuccessResult().get());
 } else {
     System.out.println(response.getErrorMessage());
