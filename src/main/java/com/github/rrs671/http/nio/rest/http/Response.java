@@ -4,6 +4,8 @@ import com.github.rrs671.http.nio.rest.exceptions.HttpException;
 import com.github.rrs671.http.nio.rest.exceptions.ResponseException;
 import org.springframework.http.HttpStatusCode;
 
+import java.util.Optional;
+
 /**
  * This classes represents the request response. To have a more safety, use also the ResponseUtils class.
  * If a response is completed with success (no error and success response code 2XX) the result can be access using
@@ -47,12 +49,12 @@ public class Response<T> {
         success = false;
     }
 
-    public T getSucessResult() {
-        if (result == null) {
+    public Optional<T> getSuccessResult() {
+        if (message != null) {
             throw new ResponseException("Success result is only available for http 2XX responses.");
         }
 
-        return result;
+        return Optional.ofNullable(result);
     }
 
     public String getErrorMessage() {
