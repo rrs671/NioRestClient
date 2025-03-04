@@ -12,7 +12,7 @@ public class ClientParams {
     private int connTimeout;
     private int readTimeout;
     private int maxConcurrentRequests;
-    private int delay;
+    private long delayInMilliSeconds;
 
     private ClientParams() {}
 
@@ -28,8 +28,8 @@ public class ClientParams {
         return maxConcurrentRequests;
     }
 
-    public int getDelay() {
-        return delay;
+    public long getDelayInMilliSeconds() {
+        return delayInMilliSeconds;
     }
 
     public static NioRestClientParamsBuilder builder() {
@@ -42,7 +42,7 @@ public class ClientParams {
         private int connTimeout;
         private int readTimeout;
         private int maxConcurrentRequests;
-        private int delay;
+        private long delayInMilliSeconds;
 
         public NioRestClientParamsBuilder addConnectionTimeout(int connTimeout) {
             this.connTimeout = connTimeout;
@@ -59,8 +59,8 @@ public class ClientParams {
             return this;
         }
 
-        public NioRestClientParamsBuilder addRequestDelay(int delayInSeconds) {
-            this.delay = delayInSeconds;
+        public NioRestClientParamsBuilder addRequestDelay(long delayInMilliSeconds) {
+            this.delayInMilliSeconds = delayInMilliSeconds;
             return this;
         }
 
@@ -70,9 +70,9 @@ public class ClientParams {
             clientParams.connTimeout = this.connTimeout;
             clientParams.readTimeout = this.readTimeout;
             clientParams.maxConcurrentRequests = this.maxConcurrentRequests;
-            clientParams.delay = this.delay;
+            clientParams.delayInMilliSeconds = this.delayInMilliSeconds;
 
-            if (this.delay > 0 && this.maxConcurrentRequests == 0) {
+            if (this.delayInMilliSeconds > 0L && this.maxConcurrentRequests == 0) {
                throw new IllegalArgumentException("When delay time is > 0, maxConcurrentRequests must be > 0");
             }
 

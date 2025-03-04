@@ -1,10 +1,10 @@
 package com.github.rrs671.http.nio.rest.client.request;
 
-import com.github.rrs671.http.nio.rest.client.NioRestClient;
 import com.github.rrs671.http.nio.rest.client.enums.VerbsEnum;
 import com.github.rrs671.http.nio.rest.client.factory.RestClientFactory;
 import com.github.rrs671.http.nio.rest.client.request.strategy.request.Request;
 import com.github.rrs671.http.nio.rest.client.request.strategy.request.strategies.*;
+import com.github.rrs671.http.nio.rest.http.AsyncRequest;
 import com.github.rrs671.http.nio.rest.utils.AsyncExecutorUtils;
 import com.github.rrs671.http.nio.rest.utils.ClientParams;
 import com.github.rrs671.http.nio.rest.utils.RequestParams;
@@ -38,7 +38,7 @@ public class RestRequest {
         }
     }
 
-    public <T> com.github.rrs671.http.nio.rest.http.Request<T> get(RequestParams params, Class<T> clazz) {
+    public <T> AsyncRequest<T> get(RequestParams params, Class<T> clazz) {
         AsyncExecutorUtils.incrementRequest();
 
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
@@ -49,11 +49,11 @@ public class RestRequest {
         return processGetResponse(future);
     }
 
-    private <T> com.github.rrs671.http.nio.rest.http.Request<T> processGetResponse(CompletableFuture<T> future) {
-        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor, semaphore, clientParams, isScheduled());
+    private <T> AsyncRequest<T> processGetResponse(CompletableFuture<T> future) {
+        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor);
     }
 
-    public <T, R> com.github.rrs671.http.nio.rest.http.Request<T> post(RequestParams params, R body, Class<T> clazz) {
+    public <T, R> AsyncRequest<T> post(RequestParams params, R body, Class<T> clazz) {
         AsyncExecutorUtils.incrementRequest();
 
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
@@ -64,11 +64,11 @@ public class RestRequest {
         return processPostResponse(future);
     }
 
-    private <T> com.github.rrs671.http.nio.rest.http.Request<T> processPostResponse(CompletableFuture<T> future) {
-        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor, semaphore, clientParams, isScheduled());
+    private <T> AsyncRequest<T> processPostResponse(CompletableFuture<T> future) {
+        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor);
     }
 
-    public <T, R> com.github.rrs671.http.nio.rest.http.Request<T> put(RequestParams params, R body, Class<T> clazz) {
+    public <T, R> AsyncRequest<T> put(RequestParams params, R body, Class<T> clazz) {
         AsyncExecutorUtils.incrementRequest();
 
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
@@ -79,11 +79,11 @@ public class RestRequest {
         return processPutResponse(future);
     }
 
-    private <T> com.github.rrs671.http.nio.rest.http.Request<T> processPutResponse(CompletableFuture<T> future) {
-        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor, semaphore, clientParams, isScheduled());
+    private <T> AsyncRequest<T> processPutResponse(CompletableFuture<T> future) {
+        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor);
     }
 
-    public <T, R> com.github.rrs671.http.nio.rest.http.Request<T> patch(RequestParams params, R body, Class<T> clazz) {
+    public <T, R> AsyncRequest<T> patch(RequestParams params, R body, Class<T> clazz) {
         AsyncExecutorUtils.incrementRequest();
 
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
@@ -94,12 +94,12 @@ public class RestRequest {
         return processPatchResponse(future);
     }
 
-    private <T> com.github.rrs671.http.nio.rest.http.Request<T> processPatchResponse(CompletableFuture<T> future) {
-        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor, semaphore, clientParams, isScheduled());
+    private <T> AsyncRequest<T> processPatchResponse(CompletableFuture<T> future) {
+        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor);
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public com.github.rrs671.http.nio.rest.http.Request<Void> delete(RequestParams params) {
+    public AsyncRequest<Void> delete(RequestParams params) {
         AsyncExecutorUtils.incrementRequest();
 
         String url = buildUrl(params.getBaseUrl(), params.getPaths(), params.getQueryParams());
@@ -110,8 +110,8 @@ public class RestRequest {
         return processDeleteResponse(future);
     }
 
-    private com.github.rrs671.http.nio.rest.http.Request<Void> processDeleteResponse(CompletableFuture<Void> future) {
-        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor, semaphore, clientParams, isScheduled());
+    private AsyncRequest<Void> processDeleteResponse(CompletableFuture<Void> future) {
+        return AsyncExecutorUtils.returnAsyncResponse(future, globalExecutor);
     }
 
     private String buildUrl(String baseUrl, List<String> paths, Map<String, String> queryParams) {
@@ -132,7 +132,7 @@ public class RestRequest {
     }
 
     private boolean isScheduled() {
-        return this.clientParams.getDelay() > 0;
+        return this.clientParams.getDelayInMilliSeconds() > 0L;
     }
 
 }
