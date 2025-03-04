@@ -4,11 +4,16 @@ import com.github.rrs671.http.nio.rest.utils.ResponseUtils;
 
 import java.util.concurrent.CompletableFuture;
 
-public class Request<T> {
+/**
+ * This classes represents the async response that will be completed in the future.
+ *
+ * @since 2.4.0
+ */
+public class AsyncRequest<T> {
 
     private final CompletableFuture<T> future;
 
-    public Request(CompletableFuture<T> future) {
+    public AsyncRequest(CompletableFuture<T> future) {
         this.future = future;
     }
 

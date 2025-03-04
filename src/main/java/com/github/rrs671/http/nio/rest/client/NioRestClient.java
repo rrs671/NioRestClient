@@ -3,9 +3,6 @@ package com.github.rrs671.http.nio.rest.client;
 import com.github.rrs671.http.nio.rest.client.request.RestRequest;
 import com.github.rrs671.http.nio.rest.utils.ClientParams;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
  * NioRestClient class, used to build RestRequests.
  *

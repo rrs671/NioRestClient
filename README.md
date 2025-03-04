@@ -9,6 +9,7 @@ This library provides a non-blocking and asynchronous implementation of `RestCli
 ## Features
 - Fully asynchronous implementation.
 - Low latency and enhanced efficiency for highly concurrent applications.
+- Rest Handlers based on HTTP verbs to perform continuous request-response jobs.
 - Based on the `RestClient`.
 
 ## Requirements
@@ -18,9 +19,9 @@ This library provides a non-blocking and asynchronous implementation of `RestCli
 Add the dependency to your Maven project:
 ```xml
 <dependency>
-    <groupId>com.github.rrs671</groupId>
+    <groupId>io.github.rrs671</groupId>
     <artifactId>nio-rest-client</artifactId>
-    <version>2.3.0</version>
+    <version>2.4.0</version>
 </dependency>
 ```
 
@@ -53,6 +54,44 @@ if (response.isSuccess()) {
 
     if (response.isHttpResponseError()) {
         System.out.println(response.getErrorStatusCode());
+    }
+}
+
+```
+
+Example usage of the library to create a job to get responses from a Get Request handle:
+
+``` java
+
+ClientParams clientParams = ClientParams.builder().build();
+
+NioRestClient nioRestClient = new NioRestClient();
+
+ResponseHandler<String, String> responseHandler = new ResponseHandlerImpl<>(1, 4);
+GetRestHandler<String, String> getRestHandler = new GetRestHandler<>(nioRestClient, clientParams, responseHandler, String.class);
+
+RequestParams requestParams = RequestParams.builder()
+        .addUrl("https://api.example.com/data")
+            .addHeaders("Content-Type", "application/json")
+                .build();
+
+getRestHandler.doGet("Request-1", requestParams);
+
+while (true) {
+    if (responseHandler.hasResponse()) {
+        Optional<Tuple<String, String>> consumed = responseHandler.consume();
+
+        Tuple<String, String> tuple = consumed.orElseThrow();
+        System.out.println("Response key: " + tuple.getKey());
+        System.out.println("Response status: " + tuple.getResponse().isSuccess());
+
+        break;
+    }
+
+    try {
+        Thread.sleep(1000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
     }
 }
 

@@ -4,7 +4,7 @@ import com.github.rrs671.http.nio.rest.client.request.RequestExecutor;
 import com.github.rrs671.http.nio.rest.exceptions.CommunicateException;
 import com.github.rrs671.http.nio.rest.exceptions.HttpException;
 import com.github.rrs671.http.nio.rest.exceptions.ProcessException;
-import com.github.rrs671.http.nio.rest.http.Request;
+import com.github.rrs671.http.nio.rest.http.AsyncRequest;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 
@@ -47,8 +47,8 @@ public abstract class AsyncExecutorUtils {
         }, executorService);
     }
 
-    public static <T> Request<T> returnAsyncResponse(CompletableFuture<T> future, ExecutorService globalExecutor, Semaphore semaphore, ClientParams clientParams, boolean isScheduled) {
-        return new Request<>(CompletableFuture.supplyAsync(() -> {
+    public static <T> AsyncRequest<T> returnAsyncResponse(CompletableFuture<T> future, ExecutorService globalExecutor) {
+        return new AsyncRequest<>(CompletableFuture.supplyAsync(() -> {
             try {
                 return future.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -59,7 +59,7 @@ public abstract class AsyncExecutorUtils {
 
     private static void applyDelay(ClientParams clientParams) {
         try {
-            Thread.sleep(clientParams.getDelay() * 1000L);
+            Thread.sleep(clientParams.getDelayInMilliSeconds());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -67,13 +67,7 @@ public abstract class AsyncExecutorUtils {
 
     public static  <T> T executeRequest(RequestExecutor<T> executor, Semaphore semaphore, ClientParams clientParams, boolean isScheduled) {
         try {
-            T execute = executor.execute();
-
-            if (isScheduled && unprocessedRequests.get() > 1L && clientParams.getMaxConcurrentRequests() < unprocessedRequests.get()) {
-                applyDelay(clientParams);
-            }
-
-            return execute;
+            return executor.execute();
         } catch (HttpStatusCodeException e) {
             throw new HttpException(e);
         } catch (ResourceAccessException e) {
@@ -81,6 +75,10 @@ public abstract class AsyncExecutorUtils {
         } catch (Exception e) {
             throw new ProcessException(e.getMessage());
         } finally {
+            if (isScheduled && unprocessedRequests.get() > 1L && clientParams.getMaxConcurrentRequests() < unprocessedRequests.get()) {
+                applyDelay(clientParams);
+            }
+
             unprocessedRequests.decrementAndGet();
             semaphore.release();
         }
