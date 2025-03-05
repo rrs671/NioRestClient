@@ -21,7 +21,7 @@ Add the dependency to your Maven project:
 <dependency>
     <groupId>io.github.rrs671</groupId>
     <artifactId>nio-rest-client</artifactId>
-    <version>2.4.1</version>
+    <version>2.4.4</version>
 </dependency>
 ```
 
