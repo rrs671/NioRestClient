@@ -1,5 +1,6 @@
 package com.github.rrs671.http.nio.rest.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rrs671.http.nio.rest.client.request.RestRequest;
 import com.github.rrs671.http.nio.rest.utils.ClientParams;
 
@@ -67,6 +68,18 @@ public class NioRestClient {
      */
     public RestRequest rest(ClientParams clientParams) {
         return new RestRequest(clientParams);
+    }
+
+    /**
+     * Returns a RestRequest instance
+     *
+     * @param clientParams a object that contains NioRestClient parameters like connection and read timeout values in seconds
+     *                            and max concurrent requests
+     * @param objectMapper a custom Object Mapper if it is necessary
+     * @return a RestRequest instance
+     */
+    public RestRequest rest(ClientParams clientParams, ObjectMapper objectMapper) {
+        return new RestRequest(clientParams, objectMapper);
     }
 
 }

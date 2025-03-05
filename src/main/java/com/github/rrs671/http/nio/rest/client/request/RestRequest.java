@@ -1,5 +1,6 @@
 package com.github.rrs671.http.nio.rest.client.request;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rrs671.http.nio.rest.client.enums.VerbsEnum;
 import com.github.rrs671.http.nio.rest.client.factory.RestClientFactory;
 import com.github.rrs671.http.nio.rest.client.request.strategy.request.Request;
@@ -21,13 +22,22 @@ import java.util.stream.Collectors;
 
 public class RestRequest {
 
-    private final ExecutorService globalExecutor;
+    private ExecutorService globalExecutor;
     private final RestClient restClient;
-    private final ClientParams clientParams;
-    private final Semaphore semaphore;
+    private ClientParams clientParams;
+    private Semaphore semaphore;
 
     public RestRequest(ClientParams clientParams) {
-        this.restClient = RestClientFactory.create(clientParams.getConnTimeout(), clientParams.getReadTimeout());
+        this.restClient = RestClientFactory.create(clientParams.getConnTimeout(), clientParams.getReadTimeout(), null);
+        init(clientParams);
+    }
+
+    public RestRequest(ClientParams clientParams, ObjectMapper objectMapper) {
+        this.restClient = RestClientFactory.create(clientParams.getConnTimeout(), clientParams.getReadTimeout(), objectMapper);
+        init(clientParams);
+    }
+
+    private void init(ClientParams clientParams) {
         this.clientParams = clientParams;
         this.globalExecutor = AsyncExecutorUtils.getGlobalExecutorInstance();
 
@@ -37,6 +47,7 @@ public class RestRequest {
             this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
         }
     }
+
 
     public <T> AsyncRequest<T> get(RequestParams params, Class<T> clazz) {
         AsyncExecutorUtils.incrementRequest();
